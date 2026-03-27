@@ -219,7 +219,66 @@ meltano run tap-csv target-bigquery
 ├── check_env.py
 └── salesportal.py                  # Streamlit executive dashboard
 ```
+---
 
+## 🔬 Exploratory Data Analysis (EDA)
+
+The EDA notebook (`eda/eda.ipynb`) performs a full data quality audit and consistency check against the transformed BigQuery marts before dashboard consumption.
+
+### Notebook Sections
+
+| # | Section | Key Output |
+|---|---|---|
+| 1 | **Environment Setup & BigQuery Configuration** | Connected to BigQuery via `GOOGLE_PROJECT_ID` from `.env` using the Python SDK |
+| 2 | **Data Loading & Initial Shape Analysis** | Loaded 6 core tables; `fct_sales` confirmed at **113,419 rows × 12 columns** |
+| 3 | **Statistical Profiling & Distribution Curves** | Mean order value R$141 vs. median R$92 — long-tail distribution confirmed; max single order R$6,929 |
+| 4 | **Dim_Customers Logic Check & Order Status Filtering** | NULL RFV: **0** — full customer base scored; `customer_id_is_invalid` uniformly `False` |
+| 5 | **Dim_Products & Categorization Audit** | **591 uncategorized products** flagged; zero null physical dimensions (`weight`, `length`) |
+| 6 | **Intermediate Table Patching & Monetary Logic** | Null monetary values patched to 0; long decimals rounded to 2dp (e.g. `238.99000000000004` → `238.99`) |
+| 7 | **City & State Normalization Check** | **10 cities** with residual accent encoding errors (`maceia³` → `maceió`); 0 affected states |
+| 8 | **Final Sales & Payments Integrity** | **0 rows dropped** from `fct_sales` — no zero-payment or missing payment method records found |
+
+---
+
+### 📊 Statistical Profile — `fct_sales`
+
+| Metric | `price` | `freight_value` | `total_payment_value` |
+|---|---|---|---|
+| **Count** | 113,419 | 113,419 | 113,419 |
+| **Mean** | R$ 121.27 | R$ 19.85 | R$ 141.15 |
+| **Median (50%)** | R$ 75.00 | R$ 16.22 | R$ 92.65 |
+| **Std Dev** | R$ 185.56 | R$ 15.84 | R$ 191.92 |
+| **Min** | R$ 0.85 | R$ 0.00 | R$ 9.34 |
+| **Max** | R$ 6,735.00 | R$ 409.68 | R$ 6,929.31 |
+
+> **Key insight:** Mean (R$141) significantly exceeds median (R$92), indicating a right-skewed distribution driven by high-value outlier orders — log-scale applied in the dashboard to preserve visual clarity across all revenue ranges.
+
+---
+
+### 🔍 Key Findings
+
+**Customer Dimension**
+- `NULL RFV: 0` — all 96K+ customers successfully assigned an RFM segment; no scoring gaps remain
+- `customer_id_is_invalid: [False]` — zero corrupted or duplicate customer IDs across the entire dimension table
+
+**Product Dimension**
+- **591 uncategorized products** detected; handled upstream via `int_products_categorized` intermediate model
+- Zero null values for `product_weight_g` and `product_length_cm` — physical specs fully populated
+
+**Sales Integrity**
+- `fct_sales` confirmed at **113,419 records, 12 columns** — no rows dropped by the zero-payment filter
+- All financial columns (`price`, `freight_value`, `total_payment_value`) confirmed as `float64` — numeric casting fix validated
+- `payment_installments` confirmed as `Int64`; all ID columns correctly typed as `object`
+
+**Geographic Normalization**
+- **10 residual encoding errors** found in `customer_city` — all in Alagoas (AL), manifesting as `maceia³` instead of `maceió`
+- Root cause: Latin-1 / UTF-8 encoding mismatch on a manually edited subset of source rows
+- All state abbreviations (`customer_state`) confirmed accent-free ✅
+- These 10 records are visible only when querying raw data via Python/dbt — BigQuery UI preview and Excel silently mask the broken byte
+
+**Monetary Patching**
+- `monetary_value` nulls → patched to `0`; no downstream NaN errors in RFM calculations
+- Sample audit record confirmed: `total_item_value: 238.99`, `total_freight_value: 22.47` — 2dp rounding validated ✅
 ---
 
 ## 📊 Dashboard Preview
