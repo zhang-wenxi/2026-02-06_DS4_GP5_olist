@@ -1,0 +1,43 @@
+import os
+from pathlib import Path
+from dagster import (
+    AssetExecutionContext, 
+    Definitions, 
+    define_asset_job, 
+    ScheduleDefinition,
+    AssetSelection
+)
+from dagster_dbt import DbtCliResource, dbt_assets
+
+# 1. Setup Paths (Pointing to your dbt folder)
+DBT_PROJECT_DIR = Path(__file__).joinpath("..", "..", "..", "dbt_olist").resolve()
+dbt_manifest_path = DBT_PROJECT_DIR.joinpath("target", "manifest.json")
+
+# 2. Create the Dagster Assets from dbt
+@dbt_assets(manifest=dbt_manifest_path)
+def olist_dbt_assets(context: AssetExecutionContext, dbt: DbtCliResource):
+    """This represents all your dbt models (Staging, Int, Marts)"""
+    yield from dbt.cli(["build"], context=context).stream()
+
+# 3. Define a "Job" (This tells Dagster WHICH assets to run)
+# We select all dbt assets to be part of this job
+olist_elt_job = define_asset_job(
+    name="olist_elt_job",
+    selection=AssetSelection.assets(olist_dbt_assets)
+)
+
+# 4. Define the Schedule (Following your friend's 2:00 AM timing)
+olist_daily_schedule = ScheduleDefinition(
+    job=olist_elt_job,
+    cron_schedule="0 2 * * *",  # Run daily at 02:00 AM
+)
+
+# 5. Final Definitions
+defs = Definitions(
+    assets=[olist_dbt_assets],
+    jobs=[olist_elt_job],
+    schedules=[olist_daily_schedule],
+    resources={
+        "dbt": DbtCliResource(project_dir=os.fspath(DBT_PROJECT_DIR)),
+    },
+)
