@@ -13,7 +13,7 @@
 ## 🗺️ Pipeline Overview
 
 <p align="center">
-  <img src="asset/datastackarch.png" width="800" alt="Modern Data Stack Architecture"><br>
+  <img src="asset/datastackarch.png" alt="Modern Data Stack Architecture"><br>
   <b>Figure 1</b>
 </p>
 
@@ -406,7 +406,7 @@ The Streamlit dashboard provides an executive-level view of the Olist dataset ac
 Figure 2 illustrates the full dashboard view. To enhance our insights, we can zoom into specific interactive features in the figures below.
 
 <p align="center">
-  <img src="asset/MonthlySalesRevenueChart-autoscale.png" width="800" alt="Monthly Sales Revenue AutoScaled icon"><b>Figure 3</b>
+  <img src="asset/MonthlySalesRevenueChart-autoscale.png"  width="80" alt="Monthly Sales Revenue AutoScaled icon"><b>Figure 3</b>
 </p>
 
 The **Monthly Sales Revenue** chart includes an **auto-scale icon** in the top right corner (Figure 3). This feature is essential for visualizing periods like December 2016, where sales figures were significantly lower due to missing data in the original Kaggle dataset.
@@ -418,19 +418,19 @@ The **Monthly Sales Revenue** chart includes an **auto-scale icon** in the top r
 Once the auto-scale icon is selected (Figure 4), the chart automatically adjusts its scale to ensure every month’s revenue remains visible and legible.
 
 <p align="center">
-  <img src="asset/customerloyaltymixchart-inactivezoomin.png" width="800" alt="Customer Loyalty Mix - Inactive Segment"><b>Figure 5</b>
+  <img src="asset/customerloyaltymixchart-inactivezoomin.png" alt="Customer Loyalty Mix - Inactive Segment"><b>Figure 5</b>
 </p>
 
 Figures 5 and 6 provide close-up views of the **Customer Loyalty Mix**. Zooming into the **Inactive** segment (Figure 5) makes the low-percentage values easier to read for executive review.
 
 <p align="center">
-  <img src="asset/customerloyaltymixchart-uncategoriedzoomin.png" width="800" alt="Customer Loyalty Mix - Uncategorized Segment"><b>Figure 6</b>
+  <img src="asset/customerloyaltymixchart-uncategoriedzoomin.png" alt="Customer Loyalty Mix - Uncategorized Segment"><b>Figure 6</b>
 </p>
 
 Similarly, zooming into the **Uncategorized** segment (Figure 6) ensures that even the smallest customer groupings are clearly represented.
 
 <p align="center">
-  <img src="asset/top15bestsellingproductcategories.png" width="800" alt="Top 15 Best Selling Product Categories"><b>Figure 7</b>
+  <img src="asset/top15bestsellingproductcategories.png" alt="Top 15 Best Selling Product Categories"><b>Figure 7</b>
 </p>
 
 The **Top 15 Best Selling Product Categories** donut chart (Figure 7) uses a custom sorting rule for the legend. Instead of sorting strictly by size, items are ordered by category importance. To maintain focus on top performers, the **"Others"** category is anchored to the bottom of the legend and positioned in the donut chart to end at the 12 o'clock mark. This ensures the #1 best-seller always begins at the top for immediate clarity.
