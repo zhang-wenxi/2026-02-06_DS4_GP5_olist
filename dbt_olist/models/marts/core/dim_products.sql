@@ -17,7 +17,7 @@ final as (
     select 
         p.product_id,
         -- Use the English name from category_mapping
-        coalesce(cm.product_category_name, 'Uncategorized') as product_category_name,
+        coalesce(cm.product_category_name, 'uncategorized') as product_category_name,
         
         p.product_name_length,
         p.product_description_length,

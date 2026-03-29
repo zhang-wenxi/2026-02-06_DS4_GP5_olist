@@ -400,7 +400,7 @@ The Streamlit dashboard provides an executive-level view of the Olist dataset ac
 | **State Market Share** | Sunburst chart drilling from state → product category revenue |
 
 <p align="center">
-  <img src="asset/salesportal.png" width="800" alt="Dashboard Overview"><b>Figure 2</b>
+  <img src="asset/portal.png" width="800" alt="Dashboard Overview"><b>Figure 2</b>
 </p>
 
 Figure 2 illustrates the full dashboard view. To enhance our insights, we can zoom into specific interactive features in the figures below.
@@ -412,7 +412,7 @@ Figure 2 illustrates the full dashboard view. To enhance our insights, we can zo
 The **Monthly Sales Revenue** chart includes an **auto-scale icon** in the top right corner (Figure 3). This feature is essential for visualizing periods like December 2016, where sales figures were significantly lower due to missing data in the original Kaggle dataset.
 
 <p align="center">
-  <img src="asset/MonthlySalesRevenueChart-scaled.png" width="800" alt="Monthly Sales Revenue"><b>Figure 4</b>
+  <img src="asset/MonthlySalesRevenueChart-scaled.png" alt="Monthly Sales Revenue"><b>Figure 4</b>
 </p>
 
 Once the auto-scale icon is selected (Figure 4), the chart automatically adjusts its scale to ensure every month’s revenue remains visible and legible.

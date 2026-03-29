@@ -353,34 +353,60 @@ with row2_col1:
     st.plotly_chart(fig_rfm, use_container_width=True)
 
 with row2_col2:
-    # 4. Top 15 Product Categories (English Version)
     st.subheader("Top 15 Best Selling Product Categories")
+    
+    # 1. Prepare Data
     df_cat_qty = df_sales.merge(df_products[['product_id', 'product_category_name']], on='product_id')
     cat_summary = df_cat_qty.groupby('product_category_name').size().reset_index(name='quantity')
     
-    top_15_cats = cat_summary.nlargest(15, 'quantity')
+    # Get Top 15 and Others
+    top_15_cats = cat_summary.nlargest(15, 'quantity').copy()
     others_qty = cat_summary[~cat_summary['product_category_name'].isin(top_15_cats['product_category_name'])]['quantity'].sum()
-    df_donut = pd.concat([top_15_cats, pd.DataFrame({'product_category_name': ['OTHERS'], 'quantity': [others_qty]})])
+    
+    # Clean up names for display
+    top_15_cats['product_category_name'] = top_15_cats['product_category_name'].str.replace('_', ' ').str.title()
+    
+    # Combine: Top 15 FIRST, Others LAST
+    df_others = pd.DataFrame({'product_category_name': ['Others'], 'quantity': [others_qty]})
+    df_donut = pd.concat([top_15_cats, df_others], ignore_index=True)
 
+    # 2. Create Figure
     fig_donut = px.pie(
         df_donut, 
         values='quantity', 
         names='product_category_name',
         hole=0.5, 
-        template='plotly_white', 
-        # Apply your custom palette here
-        color_discrete_sequence=ANNUAL_REPORT_PALETTE 
+        template='plotly_white',
+        # This is key: it prevents Plotly from re-sorting by size
+        category_orders={"product_category_name": df_donut['product_category_name'].tolist()}
     )
     
+    # 3. Handle Colors (Optional: Make 'Others' Grey)
+    # If ANNUAL_REPORT_PALETTE has 15+ colors, we can force 'Others' to be light grey
+    custom_colors = list(ANNUAL_REPORT_PALETTE[:15]) + ['#D3D3D3'] 
+    fig_donut.update_traces(marker=dict(colors=custom_colors))
+
     fig_donut.update_traces(
         textposition='inside', 
         textinfo='percent', 
-        marker=dict(line=dict(color='#FFFFFF', width=2))
+        marker=dict(line=dict(color='#FFFFFF', width=2)),
+        # Start the first slice (Top 1) at 12 o'clock
+        direction='clockwise',
+        sort=False 
     )
     
     fig_donut.update_layout(
         height=500,
-        legend=dict(title="Categories", orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.0)
+        legend=dict(
+            title="Categories (Top to Bottom)", 
+            orientation="v", 
+            yanchor="middle", 
+            y=0.5, 
+            xanchor="left", 
+            x=1.1,
+            # Ensures legend follows our dataframe order, not percentage size
+            traceorder="normal" 
+        )
     )
     st.plotly_chart(fig_donut, use_container_width=True)
 
@@ -401,7 +427,7 @@ df_market['state_full_name'] = df_market['geolocation_state'].map(state_map).fil
 
 top_15_names = df_market.groupby('product_category_name').size().nlargest(15).index.tolist()
 df_market['category_display'] = df_market['product_category_name'].apply(
-    lambda x: str(x).replace('_', ' ').title() if x in top_15_names else 'OTHERS'
+    lambda x: str(x).replace('_', ' ').title() if x in top_15_names else 'Others'
 )
 
 # Aggregating ensures math is 1:1, which "snaps" the rings together

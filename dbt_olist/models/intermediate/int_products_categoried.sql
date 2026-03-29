@@ -1,4 +1,4 @@
-{{ config(materialized='view') }}
+{{ config(materialized='table') }}
 
 with products as (
     select * from {{ ref('stg_products') }}
@@ -20,11 +20,11 @@ orders as (
 joined as (
     select 
         p.product_id,
-        -- LOGIC: English Translation -> Original Portuguese -> 'Uncategorized' fallback
+        -- LOGIC: English Translation -> Original Portuguese -> 'uncategorized' fallback
         coalesce(
             t.product_category_name_english, 
             nullif(trim(p.product_category_name), ''), 
-            'Uncategorized'
+            'uncategorized'
         ) as product_category_name,
         
         oi.order_id,
