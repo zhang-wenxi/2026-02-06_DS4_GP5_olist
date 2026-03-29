@@ -84,6 +84,16 @@ olist_project = DbtProject(
     state_path=DBT_PROJECT_DIR / "target",
 )
 
+# Auto-generate manifest if missing (helps new contributors)
+manifest_path = olist_project.manifest_path
+if not manifest_path.exists():
+    print("manifest.json not found — running `dbt parse` to generate it...")
+    subprocess.run(
+        ["dbt", "parse", "--no-partial-parse"],
+        check=True,
+        cwd=str(DBT_PROJECT_DIR)
+    )
+    
 # Load the catalog index once at startup
 catalog_index = load_catalog_index(DBT_PROJECT_DIR / "target")
 

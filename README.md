@@ -44,20 +44,23 @@ Follow these steps to replicate the environment and run the full data pipeline.
 
 2. Place the CSV files into the `data/` folder so the structure looks like this:
 ```
-   2026-02-06_DS4_GP5_olist/
-   └── data/
-       ├── olist_customers_dataset.csv
-       ├── olist_orders_dataset.csv
-       ├── olist_order_items_dataset.csv
-       ├── olist_order_payments_dataset.csv
-       ├── olist_order_reviews_dataset.csv
-       ├── olist_products_dataset.csv
-       ├── olist_sellers_dataset.csv
-       ├── olist_geolocation_dataset.csv
-       └── product_category_name_translation.csv
+2026-02-06_DS4_GP5_olist/
+├── data/                                   ← you must create this manually
+│   ├── olist_customers_dataset.csv
+│   ├── olist_orders_dataset.csv
+│   ├── olist_order_items_dataset.csv
+│   ├── olist_order_payments_dataset.csv
+│   ├── olist_order_reviews_dataset.csv
+│   ├── olist_products_dataset.csv
+│   ├── olist_sellers_dataset.csv
+│   ├── olist_geolocation_dataset.csv
+│   └── product_category_name_translation.csv
+└── dbt_olist/
+    └── seeds/
+        └── patch_missing_geolocations.csv  ← already included in the repo, do not download
 ```
 
-> **Note:** The `data/` folder is git-ignored and must be populated manually before running the pipeline.
+> **Note:** The `data/` folder is git-ignored and must be populated manually. The `seeds/` folder is already committed and requires no action.
 
 
 ### Step 2: Environment & Secrets Setup
@@ -108,37 +111,53 @@ meltano --cwd meltano run tap-csv target-bigquery
 
 ### Step 4: dbt Initialization
 
-dbt needs to download packages (like `dbt_expectations`) and build the `manifest.json` before Dagster can see the assets.
+dbt needs to download packages and build `manifest.json` before Dagster can load the asset graph. **This step is required — Dagster will crash on startup without `manifest.json`.**
 ```bash
 cd dbt_olist
-dbt deps          # Downloads dbt packages/plugins listed in packages.yml
-dbt parse --no-partial-parse   # Validates all models and builds a fresh manifest.json
-dbt build         # Runs and tests all models, creating tables in BigQuery
-dbt docs generate # Generates a browsable documentation site for your models
+dbt deps                                        # Downloads dbt packages listed in packages.yml
+dbt seed --select patch_missing_geolocations    # Loads fallback zip codes into BigQuery (required by models)
+dbt parse --no-partial-parse                    # Generates manifest.json — Dagster cannot start without this
+dbt build                                       # Runs and tests all models, creating tables in BigQuery
+dbt docs generate                               # Generates browsable documentation
 cd ..
 ```
+Seed is optional: only needed if geolocation data has missing entries.
+> **If `dbt build` fails on first run:** Run `dbt parse --no-partial-parse` alone first, then retry `dbt build`. The manifest must exist before any other dbt command can compile the full graph.
 
 ### Step 5: Dagster Orchestration
 
-To ensure Dagster picks up all the dbt models and expectations correctly:
+> **Prerequisite:** `manifest.json` must already exist inside `dbt_olist/target/` from Step 4. If it's missing, Dagster will fail to start with a `FileNotFoundError`.
 ```bash
-# Forces Dagster to re-read all dbt models fresh on startup
 export DAGSTER_DBT_PARSE_PROJECT_ON_LOAD=1
-# Loads your .env credentials into the terminal session
 export $(cat .env | grep -v '#' | xargs)
-# Launches the Dagster web UI using your pipeline definition
 dagster dev -f dagster/definition.py
 ```
+
+**If you see assets being skipped** (e.g. `quality_gate` skipped due to `patch_missing_geolocations`), it means the seed was not materialized through Dagster. Fix it by either:
+
+- **Option A (UI):** Open `http://localhost:3000` → Assets → search `patch_missing_geolocations` → click **Materialize**, then re-run `run_full_pipeline`
+- **Option B (CLI, before launching Dagster):**
+```bash
+cd dbt_olist && dbt seed --select patch_missing_geolocations && cd ..
+```
+Then relaunch Dagster.
 
 ### Step 6: Final Analytics
 
 Once the data is in BigQuery and the models are built, run the final outputs:
 
-1. **EDA:** Open and run `notebooks/eda.ipynb` (ensure the kernel is set to `olist-bq`).
+1. **EDA:** Open `notebooks/eda.ipynb` in VS Code, then set the kernel:
+   - Click **Select Kernel** (top right of the notebook)
+   - Choose **Python Environments...**
+   - Select **olist-bq** from the list
+
+   > **Note:** Do not select "Existing Jupyter Server" or "Colab" — the notebook requires the local `olist-bq` conda environment which has all project dependencies installed.
+
+   Once the kernel is set, run all cells.
 
 2. **Sales Portal:** Launches the Streamlit dashboard in your browser.
 ```bash
-   streamlit run streamlit/salesportal.py
+streamlit run streamlit/salesportal.py
 ```
 ---
 ## 📁 Project Structure
