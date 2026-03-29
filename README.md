@@ -159,9 +159,9 @@ Once the data is in BigQuery and the models are built, run the final outputs:
 ```bash
 streamlit run salesportal.py
 ```
----
  > **Note:** The salesportal.py is in the root directory.
- 
+---
+
 ## 📁 Project Structure
 
 ```
