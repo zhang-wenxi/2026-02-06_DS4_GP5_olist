@@ -1,9 +1,7 @@
 # 📦 Olist E-commerce Data Pipeline
 
 > An end-to-end production data pipeline built on the Brazilian Olist e-commerce dataset — orchestrating extraction, transformation, and visualization across a modern lakehouse stack.
-<p align="center">
-  <img src="asset/datastackarch.png" width="800" alt="Modern Data Stack Architecture">
-</p
+
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![dbt](https://img.shields.io/badge/dbt-1.x-FF694B?style=flat-square&logo=dbt&logoColor=white)](https://getdbt.com)
 [![Dagster](https://img.shields.io/badge/Dagster-Orchestration-854FFF?style=flat-square)](https://dagster.io)
@@ -14,17 +12,9 @@
 
 ## 🗺️ Pipeline Overview
 
-```
-┌─────────────┐     ┌─────────────┐     ┌───────────────────────────────────┐     ┌─────────────┐
-│   Meltano   │────▶│   Dagster   │────▶│              dbt_olist            │────▶│  BigQuery   │
-│  (EL Layer) │     │(Orchestrate)│     │  Staging → Intermediate → Marts   │     │ (Warehouse) │
-└─────────────┘     └─────────────┘     └───────────────────────────────────┘     └──────┬──────┘
-                                                                                          │
-                                                                                   ┌──────▼──────┐
-                                                                                   │  Streamlit  │
-                                                                                   │ (Dashboard) │
-                                                                                   └─────────────┘
-```
+<p align="center">
+  <img src="asset/datastackarch.png" width="800" alt="Modern Data Stack Architecture">
+</p>
 
 Raw CSV files from Olist are extracted and loaded by **Meltano**, orchestrated end-to-end by **Dagster** (with full asset lineage), transformed through three dbt layers into analytics-ready marts in **BigQuery**, and surfaced via a **Streamlit** executive dashboard.
 
@@ -48,7 +38,7 @@ Raw CSV files from Olist are extracted and loaded by **Meltano**, orchestrated e
 
 ```
 dbt_olist/models/
-├── staging/                        # Materialized as VIEWS
+├── staging/                        # Materialized as VIEWS (Medallion Bronze Layer:Raw Data Ingestion)
 │   ├── sources.yml
 │   ├── stg_customers.sql/.yml
 │   ├── stg_geolocation.sql/.yml
@@ -59,7 +49,7 @@ dbt_olist/models/
 │   ├── stg_products.sql/.yml
 │   └── stg_sellers.sql/.yml
 │
-├── intermediate/                   # Materialized as TABLES
+├── intermediate/                   # Materialized as TABLES(Medallion Silver Layer:Business Logic)
 │   ├── int_customer_location_mapping.sql
 │   ├── int_customer_metrics.sql
 │   ├── int_customer_segments.sql
@@ -71,7 +61,7 @@ dbt_olist/models/
 │   ├── int_rfv_quartiles.sql
 │   └── int_top_15_products.sql
 │
-└── marts/core/                     # Materialized as TABLES
+└── marts/core/                     # Materialized as TABLES(Medallion Gold Layer:Facts and Dimensions)
     ├── fct_sales.sql               # Central fact table
     ├── dim_customers.sql           # RFM-enriched customer dimension
     ├── dim_orders.sql              # Order lifecycle & delivery metrics
@@ -96,7 +86,7 @@ cd 2026-02-06_DS4_GP5_olist
 
 ```bash
 conda env create -f environment.yml
-conda activate olist
+conda activate olist-bq
 ```
 
 ### 3. Configure Credentials
@@ -111,10 +101,9 @@ Edit `.env` and set:
 
 ```dotenv
 GOOGLE_PROJECT_ID=your-gcp-project-id
-GOOGLE_APPLICATION_CREDENTIALS=/path/to/your/service-account.json
 ```
 
-> **Note:** Ensure your service account has BigQuery Data Editor and Job User roles.
+> **Note:** Ensure that you login via oauth and that your service account has BigQuery Data Editor and Job User roles.
 
 ### 4. Verify Your Environment
 
