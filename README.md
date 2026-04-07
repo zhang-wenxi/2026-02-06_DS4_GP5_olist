@@ -31,7 +31,7 @@ As shown in figure 1, raw CSV files from Olist are extracted and loaded by **Mel
 | **dbt_olist/models/intermediate/** | dbt | Business logic layer — RFV segmentation, order enrichment, customer metrics, product categorization |
 | **dbt_olist/models/marts/core/** | dbt | Fact & Dimension tables for Olist sales — `fct_sales`, `dim_customers`, `dim_orders`, `dim_products`, `dim_sellers`, `dim_location`, `dim_time` |
 | **eda/eda.ipynb** | Jupyter + Pandas | Exploratory data analysis — statistical profiling, null checks, geographic normalization audits, and data cleaning validation |
-| **salesportal.py / .streamlit/** | [Streamlit](https://streamlit.io) + Plotly | Executive dashboard — KPIs, monthly revenue trends, state-level sales, RFM segmentation, and product category analysis |
+| **dashboard.py / .streamlit/** | [Streamlit](https://streamlit.io) + Plotly | Executive dashboard — KPIs, monthly revenue trends, state-level sales, RFM segmentation, and product category analysis |
 
 ---
 ## ⚙️ Setup & Installation
@@ -157,9 +157,9 @@ Once the data is in BigQuery and the models are built, run the final outputs:
 
 2. **Sales Portal:** Launches the Streamlit dashboard in your browser. 
     ```bash
-    streamlit run salesportal.py
+    streamlit run dashboard.py
     ```
-    > **Note:** The salesportal.py is in the root directory.
+    > **Note:** The dashboard.py is in the root directory.
 ---
 
 ## 📁 Project Structure
@@ -195,7 +195,7 @@ Once the data is in BigQuery and the models are built, run the final outputs:
 ├── .env.example
 ├── environment.yml
 ├── check_env.py
-└── salesportal.py                  # Streamlit executive dashboard
+└── dashboard.py                  # Streamlit executive dashboard
 ```
 ---
 
