@@ -3,6 +3,7 @@
 > An end-to-end production data pipeline built on the Brazilian Olist e-commerce dataset — orchestrating extraction, transformation, and visualization across a modern lakehouse stack.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Meltano](https://shields.io/badge/Meltano-Data%20Ingestion-FF694B?style=flat-square&logo=dbt&logoColor=white)](https://meltano.com)
 [![dbt](https://img.shields.io/badge/dbt-1.x-FF694B?style=flat-square&logo=dbt&logoColor=white)](https://getdbt.com)
 [![Dagster](https://img.shields.io/badge/Dagster-Orchestration-854FFF?style=flat-square)](https://dagster.io)
 [![BigQuery](https://img.shields.io/badge/BigQuery-Data%20Warehouse-4285F4?style=flat-square&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
@@ -146,7 +147,7 @@ Then relaunch Dagster.
 
 Once the data is in BigQuery and the models are built, run the final outputs:
 
-1. **EDA:** Open `notebooks/eda.ipynb` in VS Code, then set the kernel:
+1. **EDA:** Open `eda/eda.ipynb` in VS Code, then set the kernel:
    - Click **Select Kernel** (top right of the notebook)
    - Choose **Python Environments...**
    - Select **olist-bq** from the list
