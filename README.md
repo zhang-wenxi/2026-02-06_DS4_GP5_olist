@@ -3,7 +3,7 @@
 > An end-to-end production data pipeline built on the Brazilian Olist e-commerce dataset — orchestrating extraction, transformation, and visualization across a modern lakehouse stack.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
-[![Meltano](https://shields.io/badge/Meltano-Data%20Ingestion-FF694B?style=flat-square&logo=dbt&logoColor=white)](https://meltano.com)
+[![Meltano](https://shields.io/badge/Meltano-Data%20Ingestion-32106F?style=flat-square&logo=dbt&logoColor=white)](https://meltano.com)
 [![dbt](https://img.shields.io/badge/dbt-1.x-FF694B?style=flat-square&logo=dbt&logoColor=white)](https://getdbt.com)
 [![Dagster](https://img.shields.io/badge/Dagster-Orchestration-854FFF?style=flat-square)](https://dagster.io)
 [![BigQuery](https://img.shields.io/badge/BigQuery-Data%20Warehouse-4285F4?style=flat-square&logo=google-cloud&logoColor=white)](https://cloud.google.com/bigquery)
