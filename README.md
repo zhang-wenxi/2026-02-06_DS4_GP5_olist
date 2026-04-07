@@ -501,10 +501,10 @@ Figures 5 and 6 provide close-up views of the **Customer Loyalty Mix**. Zooming 
 Similarly, zooming into the **Uncategorized** segment (Figure 6) ensures that even the smallest customer groupings are clearly represented.
 
 <p align="center">
-  <img src="asset/top15bestsellingproductcategories.png" alt="Top 15 Best Selling Product Categories"><br><b>Figure 7</b>
+  <img src="asset/top12bestsellingproductcategories.png" alt="Top 15 Best Selling Product Categories"><br><b>Figure 7</b>
 </p>
 
-The **Top 15 Best Selling Product Categories** donut chart (Figure 7) uses a custom sorting rule for the legend. Instead of sorting strictly by size, items are ordered by category importance. To maintain focus on top performers, the **"Others"** category is anchored to the bottom of the legend and positioned in the donut chart to end at the 12 o'clock mark. This ensures the #1 best-seller always begins at the top for immediate clarity.
+The **Top 12 Best Selling Product Categories** donut chart (Figure 7) uses a custom sorting rule for the legend. Instead of sorting strictly by size, items are ordered by category importance. To maintain focus on top performers, the **"Others"** category is anchored to the bottom of the legend and positioned in the donut chart to end at the 12 o'clock mark. This ensures the #1 best-seller always begins at the top for immediate clarity.
 
 ---
 
