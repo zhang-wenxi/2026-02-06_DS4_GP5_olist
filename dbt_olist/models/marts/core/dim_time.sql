@@ -17,7 +17,7 @@ final as (
         extract(quarter from time_id) as trimestre,
         
         -- BigQuery Day of Week (1 is Sunday, 7 is Saturday)
-        -- To match Databricks Weekday logic (0-6), we subtract 1
+        -- To match Weekday logic (0-6), we subtract 1
         extract(dayofweek from time_id) - 1 as weekday,
         
         -- ISO Week Number
