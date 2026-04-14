@@ -73,7 +73,7 @@ staging as (
         case when safe_cast(order_delivered_carrier_date as timestamp) < safe_cast(order_approved_at as timestamp) then true else false end as flag_carrier_before_approval,
         case when safe_cast(order_delivered_customer_date as timestamp) < safe_cast(order_delivered_carrier_date as timestamp) then true else false end as flag_customer_delivery_before_carrier,
         
-        -- MISSING LOGIC FROM ATTACHMENT: Impossible Delivery Check
+        -- MISSING LOGIC Impossible Delivery Check
         case 
             when safe_cast(order_delivered_customer_date as timestamp) < safe_cast(order_purchase_timestamp as timestamp) then true 
             else false 
