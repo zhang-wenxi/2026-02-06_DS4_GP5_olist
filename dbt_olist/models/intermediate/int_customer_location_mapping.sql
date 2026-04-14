@@ -15,7 +15,7 @@ official_geo as (
 ),
 
 patched_geo as (
-    -- Your dbt seed file
+    -- dbt seed file
     select * from {{ ref('patch_missing_geolocations') }}
 ),
 
@@ -39,7 +39,7 @@ final as (
     left join patched_geo p on c.customer_zip_code_prefix = p.zip_code_prefix
     
     -- 4. FIX: If a customer has 3 orders with 3 different ZIPs, pick the most recent one
-    -- This prevents duplicates in your dim_customers
+    -- This prevents duplicates in dim_customers
     qualify row_number() over (
         partition by c.customer_unique_id 
         order by c.ingestion_timestamp desc
