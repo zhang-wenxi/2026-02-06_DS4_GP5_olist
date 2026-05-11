@@ -1,6 +1,6 @@
 # 📦 Olist E-commerce Data Pipeline
 
-> An end-to-end production data pipeline built on the Brazilian Olist e-commerce dataset — orchestrating extraction, transformation, and visualization across a modern lakehouse stack.
+> An end-to-end production data pipeline built on the Brazilian Olist e-commerce dataset. It covers orchestration, extraction, transformation, and visualization across a modern lakehouse stack.
 
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Meltano](https://shields.io/badge/Meltano-Data%20Ingestion-32106F?style=flat-square&logo=dbt&logoColor=white)](https://meltano.com)
