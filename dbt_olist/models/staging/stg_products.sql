@@ -61,8 +61,14 @@ quality_flags as (
     select
         *,
         not regexp_contains(product_id, r'^[0-9a-fA-F]{32}$') as product_id_is_invalid,
-        (product_category_name = 'uncategorized') as product_category_name_is_missing,      
+        (product_category_name = 'uncategorized') as product_category_name_is_missing,
+        
+        -- Original column name preserved, but logic improved
+        -- Now: NULL = invalid, 0 = invalid, negative = invalid
         (coalesce(product_weight_g, 0) <= 0) as product_weight_g_invalid,
+        
+        -- NEW: Separate flag for NULLs only (for debugging)
+        (product_weight_g is null) as product_weight_g_was_null,
 
         false as is_synthetic, 
         
