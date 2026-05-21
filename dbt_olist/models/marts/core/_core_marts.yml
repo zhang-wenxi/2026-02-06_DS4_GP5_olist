@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: fct_sales
+    description: "Central fact table. Grain: 1 row per Order Item."
+    columns:
+      - name: sale_id
+        tests:
+          - unique
+          - not_null
+      
+      # SURROGATE FOREIGN KEYS (The critical change)
+      - name: customer_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customers')
+              field: customer_key
+      
+      - name: product_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_products')
+              field: product_key
+      
+      - name: seller_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_sellers')
+              field: seller_key
+      
+      - name: location_key
+        tests:
+          - relationships:
+              to: ref('dim_location')
+              field: location_key
+      
+      - name: time_key
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_time')
+              field: time_key
+      
+      - name: order_attribute_key
+        tests:
+          - relationships:
+              to: ref('dim_orders')
+              field: order_attribute_key
+      
+      # MEASURES
+      - name: total_payment_value
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+      
+      - name: delivery_days
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 365
+
+  - name: dim_customers
+    columns:
+      - name: customer_key
+        tests:
+          - unique
+          - not_null
+      
+      - name: customer_id
+        description: "Business key (customer_unique_id)"
+        tests:
+          - unique
+          - not_null
