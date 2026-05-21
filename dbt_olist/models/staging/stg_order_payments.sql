@@ -6,7 +6,7 @@ with source as (
         payment_type,
         -- Use 1 as logical minimum for sequential/installments (Databricks standard)
         coalesce(safe_cast(payment_sequential as int64), 1) as payment_sequential,
-        coalesce(safe_cast(payment_installments as int64), 1) as payment_installments,
+        coalesce(safe_cast(payment_installments as int64), 0) as payment_installments,
         coalesce(safe_cast(payment_value as float64), 0.0) as payment_value
     from {{ source('olist', 'order_payments') }}
 ),
