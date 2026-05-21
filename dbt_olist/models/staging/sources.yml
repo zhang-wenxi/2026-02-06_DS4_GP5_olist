@@ -25,13 +25,24 @@ sources:
         description: Items included in each order
         columns:
           - name: order_id
-            description: Identifier for the order to which the item belongs
             tests:
               - not_null
               - relationships:
-                  arguments:
-                    to: source('olist', 'orders')
-                    field: order_id
+                  to: source('olist', 'orders')
+                  field: order_id
+          - name: product_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('olist', 'products')
+                  field: product_id
+          - name: seller_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('olist', 'sellers')
+                  field: seller_id
+
       - name: order_payments
         description: Payment information for each order
         columns:
