@@ -42,7 +42,8 @@ cleaned_data as (
             when customer_city is null 
                  or upper(trim(customer_city)) in ('NA', 'NAN', 'NOT_DEFINED') then 'Unknown'
             
-            -- THE FIX: Catching the 'maceia' ghost character
+            -- Special case: 'maceia' appears in source data due to encoding issue with 'ç'
+            -- Mapping to correct city 'maceio'
             when lower(trim(customer_city)) like 'maceia%' then 'maceio'
             
             else 
