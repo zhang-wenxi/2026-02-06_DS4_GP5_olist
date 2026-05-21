@@ -41,9 +41,9 @@ models:
       - name: order_purchase_timestamp
         tests:
           - not_null
-          - dbt_expectations.expect_row_values_to_have_recent_data:
-              datepart: day
-              interval: 1
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: '2016-01-01'
+              max_value: '2018-12-31'
               config:
                 severity: warn
 
