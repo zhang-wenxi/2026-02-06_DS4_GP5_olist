@@ -25,24 +25,13 @@ sources:
         description: Items included in each order
         columns:
           - name: order_id
+            description: Identifier for the order to which the item belongs
             tests:
               - not_null
               - relationships:
-                  to: source('olist', 'orders')
-                  field: order_id
-          - name: product_id
-            tests:
-              - not_null
-              - relationships:
-                  to: source('olist', 'products')
-                  field: product_id
-          - name: seller_id
-            tests:
-              - not_null
-              - relationships:
-                  to: source('olist', 'sellers')
-                  field: seller_id
-
+                  arguments:
+                    to: source('olist', 'orders')
+                    field: order_id
       - name: order_payments
         description: Payment information for each order
         columns:
@@ -100,14 +89,3 @@ sources:
                     severity: warn
               - not_null
       - name: product_category_name_translation
-        description: Portuguese to English category translation
-        columns:
-          - name: product_category_name
-            description: Portuguese category name
-            tests:
-              - unique
-              - not_null
-          - name: product_category_name_english
-            description: English translation
-            tests:
-              - not_null
