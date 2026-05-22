@@ -1,0 +1,86 @@
+version: 2
+
+models:
+  - name: stg_order_items
+    description: "Staged order items with UUID validation and price/freight integrity checks"
+    columns:
+      - name: order_id
+        description: "Order identifier (32-char hex string)"
+        tests:
+          - not_null
+          # NEW: Ensure every item belongs to an existing order
+          - relationships:
+              to: ref('stg_orders')
+              field: order_id
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[0-9a-fA-F]{32}$"
+
+      - name: product_id
+        tests:
+          - not_null
+          # EXISTING: Linking to products
+          - relationships:
+              to: ref('stg_products')
+              field: product_id
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[0-9a-fA-F]{32}$"
+
+      - name: seller_id
+        description: "Seller identifier (32-char hex string)"
+        tests:
+          - not_null
+          # NEW: Ensure every item is attributed to a real seller
+          - relationships:
+              to: ref('stg_sellers')
+              field: seller_id
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[0-9a-fA-F]{32}$"
+
+      - name: order_item_id
+        description: "Sequential line item number for the order"
+        tests:
+          - not_null
+
+      - name: price
+        description: "Unit price of the product"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: true
+              # FIX: indent 'config' to align with 'min_value' and 'strictly'
+              config:
+                severity: warn
+
+      - name: freight_value
+        description: "Shipping cost"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              strictly: false
+              # FIX: same here
+              config:
+                severity: warn
+
+      # Quality Flags
+      - name: order_id_is_invalid
+        description: "Integrity Flag: True if the order_id is null or fails the 32-char hex validation."
+
+      - name: product_id_is_invalid
+        description: "Integrity Flag: True if the product_id is null or malformed."
+
+      - name: price_issue
+        description: "Financial Quality Flag: True if the unit price is zero, negative, or null."
+
+      - name: freight_issue
+        description: "Logistics Quality Flag: True if freight value is negative or null."
+
+      - name: had_duplicates
+        description: "Audit Flag: True if this record was deduplicated."
+
+      - name: seller_id_is_invalid
+        description: "Integrity Flag: True if seller_id fails hex validation."
+
+      - name: ingestion_timestamp
+        description: "Audit: Time of processing."
+        tests:
+          - not_null

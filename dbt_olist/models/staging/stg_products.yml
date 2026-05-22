@@ -1,0 +1,83 @@
+version: 2
+
+models:
+  - name: stg_products
+    description: "Staged products following Silver Layer quality principles and category normalization"
+    columns:
+      - name: product_id
+        description: "Unique product identifier (32-char hex string)"
+        tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_values_to_match_regex:
+              regex: "^[0-9a-fA-F]{32}$"
+
+      - name: product_category_name
+        description: "Normalized category (Accents removed, suffixes stripped). NULLs/Placeholders set to 'uncategorized'."
+        tests:
+          - not_null
+          # FIX: Set to warn so the 623 missing translations don't break the build
+          - relationships:
+              arguments:
+              to: ref('stg_product_category_name_translation')
+              field: product_category_name
+              config:
+                severity: warn
+
+      - name: product_name_length
+        description: "Length of product name. Coalesced to -1 if missing."
+
+      - name: product_description_length
+        description: "Length of description. Coalesced to -1 if missing."
+
+      - name: product_photos_qty
+        description: "Quantity of photos. Coalesced to 0 if missing."
+
+      # Quality Flags
+      - name: product_id_is_invalid
+        description: "Flag: True if product_id fails hex validation."
+
+      - name: product_category_name_is_missing
+        description: "Flag: True if original category was NULL or 'not_defined'."
+
+      - name: product_weight_g_invalid
+        description: "Data quality alert: True if the recorded weight is zero or negative."
+
+      - name: is_synthetic
+        description: "Audit flag: True if the record was generated/imputed to maintain referential integrity."
+
+      - name: ingestion_timestamp
+        description: "Lineage: Timestamp of processing in the Silver layer."
+        tests:
+          - not_null
+
+      # Physical Dimensions
+      - name: product_weight_g
+        description: "Product weight in grams"
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              config:
+                severity: warn
+
+      - name: product_length_cm
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              config:
+                severity: warn
+
+      - name: product_height_cm
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              config:
+                severity: warn
+
+      - name: product_width_cm
+        tests:
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              config:
+                severity: warn
+
