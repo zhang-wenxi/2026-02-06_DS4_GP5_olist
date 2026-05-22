@@ -1,43 +1,37 @@
 {{ config(materialized='table') }}
 
-with date_spine as (
-    -- Generate date range from your data
+with orders as (
+    -- Reference your staging orders to get all unique purchase dates
     select distinct 
-        cast(order_purchase_timestamp as date) as full_date
+        cast(order_purchase_timestamp as date) as time_id 
     from {{ ref('stg_orders') }}
-    
-    union distinct
-    
-    select distinct 
-        cast(order_delivered_customer_date as date) as full_date
-    from {{ ref('stg_orders') }}
-    where order_delivered_customer_date is not null
 ),
 
 final as (
     select
-        -- SURROGATE KEY (Integer for performance)
-        cast(format_date('%Y%m%d', full_date) as int64) as time_key,
+        time_id,
+        -- BigQuery Date Extractions
+        extract(year from time_id) as year,
+        extract(month from time_id) as month,
+        extract(day from time_id) as day,
+        extract(quarter from time_id) as trimestre,
         
-        -- NATURAL KEY
-        full_date as order_date,
+        -- BigQuery Day of Week (1 is Sunday, 7 is Saturday)
+        -- To match Databricks Weekday logic (0-6), we subtract 1
+        extract(dayofweek from time_id) - 1 as weekday,
         
-        -- Date attributes
-        extract(year from full_date) as year,
-        extract(month from full_date) as month,
-        extract(day from full_date) as day,
-        extract(quarter from full_date) as quarter,
-        format_date('%B', full_date) as month_name,
-        extract(dayofweek from full_date) - 1 as weekday,
-        extract(week from full_date) as week_number,
+        -- ISO Week Number
+        extract(isoweek from time_id) as week_number,
         
-        -- Business flags
-        case when extract(dayofweek from full_date) in (1, 7) then true else false end as is_weekend,
-        case when extract(month from full_date) in (11, 12) then true else false end as is_peak_season
-        
-    from date_spine
-    where full_date is not null
+        -- Logic: Weekend check (Saturday = 7, Sunday = 1 in BigQuery)
+        case 
+            when extract(dayofweek from time_id) in (1, 7) then true 
+            else false 
+        end as is_weekend
+
+    from orders
 )
 
 select * from final
-order by time_key
+-- Ensure the time dimension is sorted for BI performance
+order by time_id desc
