@@ -37,21 +37,9 @@ metrics as (
         count(distinct o.order_id) as frequency,
         max(o.order_purchase_timestamp) as last_purchase_date,
         
-        -- Summing total spend for each across all orders
-        --  add a flag
-        sum(case 
-            when oi.item_monetary_value is null and p.payment_monetary_value is null 
-            then 1 else 0 
-        end) as has_missing_payment_data,
-
-        -- monetary value with safe fallback
+        -- Summing total spend for the person across all orders
         round(
-            cast(
-                coalesce(
-                    sum(coalesce(oi.item_monetary_value, p.payment_monetary_value)), 
-                    0
-                ) as numeric
-            ), 
+            cast(sum(coalesce(oi.item_monetary_value, p.payment_monetary_value)) as numeric), 
             2
         ) as monetary_value
         
@@ -63,10 +51,10 @@ metrics as (
 )
 
 select
-    customer_unique_id as customer_id,
+    customer_unique_id as customer_id, -- Make sure this matches the CTE column name
     frequency,
     monetary_value,
-    last_purchase_date,  -- Add this line
+    -- This calculates recency based on the dataset's 'present day'
     date_diff(
         (select max(cast(last_purchase_date as date)) from metrics), 
         cast(last_purchase_date as date), 
