@@ -32,7 +32,7 @@ calculated_metrics as (
         frequency,
         monetary_value,
         -- Use a fixed date (or MAX date from orders) to keep recency relevant
-        date_diff(current_date(), cast(last_purchase_date as date), DAY) as recency
+        date_diff(date '2018-09-03', cast(last_purchase_date as date), DAY) as recency
     from metrics
 ),
 
