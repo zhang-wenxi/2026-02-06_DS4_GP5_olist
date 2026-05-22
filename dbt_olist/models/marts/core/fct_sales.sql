@@ -1,164 +1,87 @@
-{{ config(
-    materialized='table',
-    partition_by={"field": "order_date", "data_type": "date"},
-    cluster_by=["order_key", "customer_key", "product_key", "seller_key"]
-) }}
+{{ config(materialized='table') }}
 
--- =====================================================
--- PURPOSE: Sales fact table at order item grain
--- GRAIN: One row per order_item_id
--- FOREIGN KEYS: All *_key columns point to dimensions
--- =====================================================
-
-with order_items as (
+with orders as (
     select 
-        order_id,
-        order_item_id,
-        product_id,
-        seller_id,
-        price,
-        freight_value,
-        price_issue,
-        freight_issue
+        o.order_id, 
+        -- NEW: Get the REAL human ID to match your dim_customers primary key
+        c.customer_unique_id as customer_id, 
+        o.order_purchase_timestamp 
+    from {{ ref('stg_orders') }} o
+    -- Join to customers to get the unique person ID
+    left join {{ ref('stg_customers') }} c on o.customer_id = c.customer_id
+),
+
+items as (
+    -- Efficient: Only select grain and price components
+    select 
+        order_id, 
+        order_item_id, 
+        product_id, 
+        seller_id, 
+        price, 
+        freight_value 
     from {{ ref('stg_order_items') }}
 ),
 
-orders as (
+payments as (
+    -- Efficient: Only select summary values
     select 
-        order_id,
-        customer_id,
-        order_purchase_timestamp,
-        order_delivered_customer_date,  -- Correct column name
-        order_estimated_delivery_date,  -- Correct column name
-        order_status
-    from {{ ref('stg_orders') }}
+        order_id, 
+        total_order_payment, 
+        max_installments 
+    from {{ ref('int_order_payments_summary') }}
 ),
 
--- Use pre-allocated payments from intermediate
-payments_allocated as (
+sellers as (
+    -- Efficient: Only select IDs for mapping
     select 
-        order_id,
-        allocated_payment_per_item,
-        max_installments,
-        unique_payment_methods,
-        has_rounding_discrepancy
-    from {{ ref('int_order_payment_allocated') }}
-),
-
--- Join to dimensions to get surrogate keys
-dim_customers as (
-    select customer_id as business_customer_id, customer_key
-    from {{ ref('dim_customers') }}
-    where is_current = true
-),
-
-dim_products as (
-    select product_id as business_product_id, product_key
-    from {{ ref('dim_products') }}
-    where is_current = true
-),
-
-dim_sellers as (
-    select seller_id as business_seller_id, seller_key
+        seller_id, 
+        location_id 
     from {{ ref('dim_sellers') }}
-    where is_current = true
-),
-
-dim_location as (
-    select location_key, geolocation_zip_code_prefix
-    from {{ ref('dim_location') }}
-),
-
-dim_orders_junk as (
-    select order_status, order_attribute_key
-    from {{ ref('dim_orders') }}
-),
-
-dim_time as (
-    select time_key, order_date
-    from {{ ref('dim_time') }}
 ),
 
 final as (
     select
-        -- SURROGATE FOREIGN KEYS (The fix!)
-        o.order_id as order_key,  -- Using order_id as degenerate dimension key
-        c.customer_key,
-        p.product_key,
-        s.seller_key,
-        l.location_key,
-        t.time_key,
-        oa.order_attribute_key,
-        
-        -- BUSINESS KEYS (for reference only)
-        oi.order_id,
-        oi.order_item_id,
-        
-        -- DATE (for partitioning)
-        t.order_date,
-        
-        -- MEASURES
-        oi.price,
-        oi.freight_value,
-        pa.allocated_payment_per_item as total_payment_value,
-        pa.max_installments as payment_installments,
-        pa.unique_payment_methods,
-        
-        -- QUANTITY (always 1 at this grain)
-        1 as quantity,
-        
-        -- DERIVED MEASURES
-        case 
-            when o.order_delivered_customer_timestamp is not null then true 
-            else false 
-        end as delivered_flag,
-        
-        case 
-            when o.order_delivered_customer_timestamp is not null
-            then date_diff(
-                date(o.order_delivered_customer_timestamp), 
-                date(o.order_purchase_timestamp), 
-                day
-            )
-            else null
-        end as delivery_days,
-        
-        case 
-            when o.order_delivered_customer_timestamp is not null
-            then greatest(
-                date_diff(
-                    date(o.order_delivered_customer_timestamp), 
-                    date(o.order_estimated_delivery_timestamp), 
-                    day
-                ), 
-                0
-            )
-            else null
-        end as estimated_delay_days,
-        
-        -- QUALITY FLAGS (Preserved from staging)
-        oi.price_issue,
-        oi.freight_issue,
-        pa.has_rounding_discrepancy,
-        
-        -- METADATA
-        current_timestamp() as loaded_at
+        -- 1. Unique ID
+        coalesce(
+            concat(o.order_id, '-', cast(i.order_item_id as string)),
+            concat(o.order_id, CAST('-0' AS STRING))
+        ) as sale_id,
 
-    from order_items oi
-    
-    -- Join to orders
-    inner join orders o on oi.order_id = o.order_id
-    
-    -- Join to pre-allocated payments
-    inner join payments_allocated pa on oi.order_id = pa.order_id
-    
-    -- Join to dimensions (using business keys)
-    left join dim_customers c on o.customer_id = c.business_customer_id
-    left join dim_products p on oi.product_id = p.business_product_id
-    left join dim_sellers s on oi.seller_id = s.business_seller_id
-    left join dim_location l on s.seller_zip_code_prefix = l.geolocation_zip_code_prefix
-    left join dim_orders_junk oa on o.order_status = oa.order_status
-    left join dim_time t on date(o.order_purchase_timestamp) = t.order_date
+        -- 2. Foreign Keys (Handling the NULLs)
+        o.order_id,
+        o.customer_id,
+        coalesce(i.product_id, 'UNKNOWN_PRODUCT') as product_id,
+        coalesce(s.seller_id, 'UNKNOWN_SELLER') as seller_id,
+        coalesce(s.location_id, 'UNKNOWN_LOCATION') as location_id,
+        cast(o.order_purchase_timestamp as date) as time_id,
+
+        -- 3. Quantity / Sequence (Grain tracking)
+        coalesce(cast(i.order_item_id as string), cast('0' as string)) as quantity,
+
+        -- 4. Financial Logic (Fallback for canceled/missing items)
+        case 
+            when i.order_id is not null then cast(i.price as numeric)
+            else cast(p.total_order_payment as numeric)
+        end as price,
+
+        coalesce(cast(i.freight_value as numeric), 0) as freight_value,
+
+        -- 5. THE ALLOCATION & ROUNDING FIX
+        -- We divide the total payment by the item count per order and round to 2 decimals.
+        -- This ensures sum(total_payment_value) in Streamlit matches your real Revenue.
+        round(
+            cast(
+                p.total_order_payment / count(*) over (partition by o.order_id) 
+            as numeric), 
+        2) as total_payment_value,
+
+        p.max_installments as payment_installments
+
+    from orders o
+    inner join payments p on o.order_id = p.order_id
+    left join items i on o.order_id = i.order_id
+    left join sellers s on i.seller_id = s.seller_id
 )
 
 select * from final
