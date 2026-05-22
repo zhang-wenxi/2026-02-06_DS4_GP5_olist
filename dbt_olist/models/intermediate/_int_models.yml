@@ -10,7 +10,6 @@ models:
           - not_null
           - unique
           - relationships:
-              arguments:
               to: ref('int_rfv_quartiles')
               field: customer_id
       - name: segment
@@ -31,10 +30,9 @@ models:
         tests:
           - not_null
           - unique
-          - relationships:
-              arguments:
-              to: ref('stg_order_payments')
-              field: order_id
+        - relationships:
+            to: ref('stg_order_payments')
+            field: order_id
       - name: total_order_payment
         tests:
           - dbt_expectations.expect_column_values_to_be_between:
@@ -48,7 +46,6 @@ models:
           - unique
           - not_null
           - relationships:
-              arguments:
               to: ref('stg_orders')
               field: order_id
       - name: lead_time_days
@@ -63,13 +60,11 @@ models:
       - name: product_id
         tests:
           - relationships:
-              arguments:
               to: ref('stg_products')
               field: product_id
       - name: order_id
         tests:
           - relationships:
-              arguments:
               to: ref('stg_orders')
               field: order_id
       - name: product_category_name
@@ -85,6 +80,5 @@ models:
           - unique
           - not_null
           - relationships:
-              arguments:
               to: ref('stg_order_items')
               field: product_id
