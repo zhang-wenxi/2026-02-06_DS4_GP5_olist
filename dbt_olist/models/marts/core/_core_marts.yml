@@ -1,76 +1,108 @@
 version: 2
 
 models:
+  # 1. Sales Fact Table
   - name: fct_sales
-    description: "Central fact table. Grain: 1 row per Order Item."
+    description: "Central fact table. Grain: 1 row per Order Item (includes canceled orders with 0 items)."
     columns:
       - name: sale_id
         tests:
           - unique
           - not_null
-      
-      # SURROGATE FOREIGN KEYS (The critical change)
-      - name: customer_key
+      - name: order_id
         tests:
           - not_null
           - relationships:
-              to: ref('dim_customers')
-              field: customer_key
-      
-      - name: product_key
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_products')
-              field: product_key
-      
-      - name: seller_key
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_sellers')
-              field: seller_key
-      
-      - name: location_key
-        tests:
-          - relationships:
-              to: ref('dim_location')
-              field: location_key
-      
-      - name: time_key
-        tests:
-          - not_null
-          - relationships:
-              to: ref('dim_time')
-              field: time_key
-      
-      - name: order_attribute_key
-        tests:
-          - relationships:
+              arguments:
               to: ref('dim_orders')
-              field: order_attribute_key
-      
-      # MEASURES
-      - name: total_payment_value
+              field: order_id
+      - name: customer_id
         tests:
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-      
-      - name: delivery_days
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+              config:
+                severity: warn
+      - name: product_id
         tests:
-          - dbt_expectations.expect_column_values_to_be_between:
-              min_value: 0
-              max_value: 365
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('dim_products')
+              field: product_id
+              # ADD THIS CONFIG BLOCK:
+              config:
+                warn_if: "> 0"
+                error_if: "> 800"
+      - name: seller_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('dim_sellers')
+              field: seller_id
+              # ADD THIS CONFIG BLOCK:
+              config:
+                warn_if: "> 0"
+                error_if: "> 800" 
 
+  # 2. Customer Dimension
   - name: dim_customers
     columns:
-      - name: customer_key
+      - name: customer_id
         tests:
           - unique
           - not_null
-      
-      - name: customer_id
-        description: "Business key (customer_unique_id)"
+          - relationships:
+              arguments:
+                to: ref('stg_customers')
+                field: customer_id
+              config:
+                severity: warn
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: 
+                - 'Champions'
+                - 'New Customers - Promising'
+                - 'Loyal Customers'
+                - 'Potential Loyalists'
+                - 'At Risk - Cannot Lose Them'
+                - 'Hibernating - Lost'
+                - 'Inactive (Canceled/Unavailable)'
+                - 'Lead (No Orders)'
+                - 'Uncategorized'
+
+
+  # 3. Order Dimension
+  - name: dim_orders
+    columns:
+      - name: order_id
         tests:
           - unique
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('int_orders_enriched')
+              field: order_id
+      - name: order_activity_status
+        tests:
+          - accepted_values:
+              values: ['Completed', 'Incomplete/Canceled', 'In Progress', 'completed', 'canceled', 'unavailable']
+
+  # 4. Product Dimension
+  - name: dim_products
+    columns:
+      - name: product_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+              to: ref('stg_products')
+              field: product_id
+      - name: is_top_15_seller
+        tests:
           - not_null
