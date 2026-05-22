@@ -4,17 +4,10 @@ with source as (
     select
         order_id,
         payment_type,
-        -- Use 1 as logical minimum for sequential
+        -- Use 1 as logical minimum for sequential/installments (Databricks standard)
         coalesce(safe_cast(payment_sequential as int64), 1) as payment_sequential,
-        -- Fix #1: NULL installments = 0 (unknown), not 1
-        coalesce(safe_cast(payment_installments as int64), 0) as payment_installments,
-        -- Fix #2: Handle negative payment values
-        case 
-            when safe_cast(payment_value as float64) < 0 then 0.0
-            else coalesce(safe_cast(payment_value as float64), 0.0)
-        end as payment_value,
-        -- Fix #2 bonus: Flag negative values for investigation
-        (safe_cast(payment_value as float64) < 0) as payment_value_was_negative
+        coalesce(safe_cast(payment_installments as int64), 1) as payment_installments,
+        coalesce(safe_cast(payment_value as float64), 0.0) as payment_value
     from {{ source('olist', 'order_payments') }}
 ),
 
